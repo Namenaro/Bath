@@ -32,8 +32,24 @@ class SessionHistory:
             dataset[i] = np.concatenate((dataset[i]), np.array(self.actions[i], dtype='float32'))
         return dataset
 
+    def visualise_all_on_picture(self, pictue_name, side):
+        curr_picture = cv2.imread(pictue_name, cv2.IMREAD_GRAYSCALE)
+        curr_picture = curr_picture * float(1) / float(255)
+        top_left_x = self.initial_coord[0]
+        top_left_y = self.initial_coord[1]
+        for i in range(self.size()):
+            cv2.rectangle(curr_picture,
+                          pt1=(top_left_x, top_left_y),
+                          pt2=(top_left_x + side, top_left_y + side),
+                          color=(255, 0, 0))
+            top_left_x += self.actions[i][0]
+            top_left_y += self.actions[i][1]
+
 
 class World:
+    """
+    Наблюдение для сети это вектор, составленный их текущей ретины и прошлого действия
+    """
     def __init__(self, fovea_side, retina_padding):
         self.PADDING = 100 # при выборе начала новой сессии, точка выбирается случайно на такой отступе от края картинки
         self.fovea_side = fovea_side
@@ -48,35 +64,28 @@ class World:
         self.curr_picture = self.curr_picture* float(1) / float(255)
 
     def reset(self):
-        self.clear_session()
+        "устанавливает взгляд в случайную точку на картинке, возвращает ретину, стартует новую сессию "
         self._set_random_left_top()
+        self.session_history = SessionHistory(initial_coord=self.initial_coord)
+        self.session_history.add(fovea_matrix=self._get_currnet_fovea_matrix(),
+                                 context_matrix=self._get_current_retina_matrix(),
+                                 action=[0,0])
 
-    def clear_session(self):
-        self.session_history = []
-        self.top_left_x = None
-        self.top_left_y = None
 
-    def clear_history(self):
-        self.session_history = []
+        return
 
-    def action(self, command):
+
+    def step(self, action):
         assert self.top_left_y is not None and self.top_left_x is not None
-        self.top_left_x += command.dx
-        self.top_left_y += command.dy
+        self.top_left_x += action[0]
+        self.top_left_y += action[1]
 
-        matrix_fovea = self._get_subframe(side=self.fovea_side,
-                                                 x=self.top_left_x,
-                                                 y=self.top_left_y)
-        matrix_retina = self._get_subframe(side=self.fovea_side+self.retina_padding,
-                                                  x=self.top_left_x-self.retina_padding,
-                                                  y=self.top_left_y-self.retina_padding)
+        matrix_fovea = self._get_currnet_fovea_matrix()
+        matrix_retina = self._get_current_retina_matrix()
 
-
-        self.session_history.append(history_record)
-        cv2.rectangle(self.curr_picture,
-                      pt1=(self.top_left_x, self.top_left_y),
-                      pt2=(self.top_left_x+self.fovea_side, self.top_left_y+self.fovea_side),
-                      color=(255,0,0))
+        self.session_history.add(fovea_matrix=self._get_currnet_fovea_matrix(),
+                                 context_matrix=self._get_current_retina_matrix(),
+                                 action=action)
         return result
 
     def visualise_history(self):
@@ -90,6 +99,15 @@ class World:
         self.saver.save_matrix_as_png('_all_', self.curr_picture, scaling_factor=1)
 
 
+    def _get_currnet_fovea_matrix(self):
+        return self._get_subframe(side=self.fovea_side,
+                                  x=self.top_left_x,
+                                  y=self.top_left_y)
+
+    def _get_current_retina_matrix(self):
+        return self._get_subframe(side=self.fovea_side+self.retina_padding,
+                                  x=self.top_left_x-self.retina_padding,
+                                  y=self.top_left_y-self.retina_padding)
     def print_history(self):
         if len(self.session_history) == 0:
             log("my warning: no history to print...")
