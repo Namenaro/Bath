@@ -25,13 +25,6 @@ class SessionHistory:
         dataset = dataset.reshape((len(dataset), flatten_len))
         return dataset
 
-    def get_extra_foveal_dataset(self):
-        assert len(self.foveals) == len(self.actions)
-        dataset = self.get_foveal_dataset()
-        for i in range(len(self.foveals)):
-            dataset[i] = np.concatenate((dataset[i]), np.array(self.actions[i], dtype='float32'))
-        return dataset
-
     def visualise_all_on_picture(self, pictue_name, side):
         curr_picture = cv2.imread(pictue_name, cv2.IMREAD_GRAYSCALE)
         curr_picture = curr_picture * float(1) / float(255)
