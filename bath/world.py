@@ -159,14 +159,14 @@ if __name__ == '__main__':
     seq_len = 5
     commands = []
     for i in range(seq_len):
-        command = [2, 1]
+        command = np.array([2., 1.], dtype='float32')
         commands.append(command)
 
-    world = World(fovea_side=4, retina_padding=4)
+    world = World(fovea_side=4, retina_padding=4, session_time_len=seq_len)
     world.set_picture(picture_name)
-    world.run_session()
+    world.reset()
     for command in commands:
-        world.action(command)
-    world.print_history()
-    world.visualise_history()
-    world.save_history(filename='pr1.pkl')
+        observation, reward, done = world.step(command)
+        print('action= ' + str(command))
+        if done is True:
+            print('DONE! reward=' + str(reward))
