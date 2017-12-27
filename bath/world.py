@@ -58,6 +58,20 @@ class World:
         self.curr_picture = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
         self.curr_picture = self.curr_picture* float(1) / float(255)
 
+    def _get_currnet_fovea_matrix(self):
+        return self._get_subframe(side=self.fovea_side,
+                                  x=self.top_left_x,
+                                  y=self.top_left_y)
+
+    def _get_current_retina_matrix(self):
+        return self._get_subframe(side=self.fovea_side+self.retina_padding,
+                                  x=self.top_left_x-self.retina_padding,
+                                  y=self.top_left_y-self.retina_padding)
+
+    def _make_observation(self, current_retina_as_matrix, last_action_as_arr):
+        observation = np.concatenate((dataset[i]), np.array(self.actions[i], dtype='float32'))
+        return observation
+
     def reset(self):
         "устанавливает взгляд в случайную точку на картинке, возвращает ретину, стартует новую сессию "
         self._set_random_left_top()
@@ -82,37 +96,6 @@ class World:
                                  context_matrix=self._get_current_retina_matrix(),
                                  action=action)
         return result
-
-    def visualise_history(self):
-        if len(self.session_history) == 0:
-            log("my warning: no history to visualise")
-        i = 0
-        for entry in self.session_history:
-            self.saver.save_matrix_as_png(str(i), entry.feedback.matrix_fovea, scaling_factor=5)
-            self.saver.save_matrix_as_png('_'+str(i), entry.feedback.matrix_retina, scaling_factor=5)
-            i+=1
-        self.saver.save_matrix_as_png('_all_', self.curr_picture, scaling_factor=1)
-
-
-    def _get_currnet_fovea_matrix(self):
-        return self._get_subframe(side=self.fovea_side,
-                                  x=self.top_left_x,
-                                  y=self.top_left_y)
-
-    def _get_current_retina_matrix(self):
-        return self._get_subframe(side=self.fovea_side+self.retina_padding,
-                                  x=self.top_left_x-self.retina_padding,
-                                  y=self.top_left_y-self.retina_padding)
-    def print_history(self):
-        if len(self.session_history) == 0:
-            log("my warning: no history to print...")
-        for entry in self.session_history:
-            entry.command.print()
-            entry.feedback.print()
-
-    def save_history(self, filename):
-        path = self.saver.save_obj(filename, self.session_history)
-        print (path)
 
     #---------------------------------------------
     def _get_subframe(self, side, x, y):
@@ -147,13 +130,6 @@ class World:
         if pic_max_x > shape[0] or pic_max_y > shape[1]:
             return True
         return False
-
-    def get_fovea_dataset_flattened(self):
-        dataset = [entry.feedback.matrix_fovea for entry in self.session_history]
-        dataset = np.array(dataset, dtype='float32')
-        flatten_data_len = np.prod(dataset.shape[1:])
-        dataset = dataset.reshape((len(dataset), flatten_data_len))
-        return dataset
 
 
 
