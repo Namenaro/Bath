@@ -45,13 +45,17 @@ class World:
     """
     Наблюдение для сети это вектор, составленный их текущей ретины и прошлого действия
     """
-    def __init__(self, fovea_side, retina_padding):
+    def __init__(self, fovea_side, retina_padding, session_time_len):
         self.PADDING = 100 # при выборе начала новой сессии, точка выбирается случайно на такой отступе от края картинки
         self.fovea_side = fovea_side
         self.retina_padding = retina_padding
+        self.max_session_time = session_time_len
+
         self.session_history = None
         self.curr_picture = None
         self.current_coord = None
+        self.current_time_in_session = 0
+
 
     def set_picture(self, path):
         assert os.path.isfile(path)
@@ -97,7 +101,9 @@ class World:
         self.session_history.add(fovea_matrix=self._get_currnet_fovea_matrix(),
                                  context_matrix=self._get_current_retina_matrix(),
                                  action=action)
-        return result
+
+
+        return observation, reward, done
 
     #---------------------------------------------
     def _get_subframe(self, side, x, y):
