@@ -69,7 +69,8 @@ class World:
                                   y=self.top_left_y-self.retina_padding)
 
     def _make_observation(self, current_retina_as_matrix, last_action_as_arr):
-        observation = np.concatenate((dataset[i]), np.array(self.actions[i], dtype='float32'))
+        current_retina_as_vector = current_retina_as_matrix.flatten()
+        observation = np.concatenate(current_retina_as_vector, np.array(last_action_as_arr, dtype='float32'))
         return observation
 
     def reset(self):
@@ -80,8 +81,9 @@ class World:
                                  context_matrix=self._get_current_retina_matrix(),
                                  action=[0,0])
 
-        observation = np.concatenate((dataset[i]), np.array(self.actions[i], dtype='float32'))
-        return
+        observation = self._make_observation(current_retina_as_matrix=self._get_current_retina_matrix(),
+                                             last_action_as_arr=[0,0])
+        return observation
 
 
     def step(self, action):
