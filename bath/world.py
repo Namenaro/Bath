@@ -28,16 +28,18 @@ class SessionHistory:
     def visualise_all_on_picture(self, pictue_name, side):
         curr_picture = cv2.imread(pictue_name, cv2.IMREAD_GRAYSCALE)
         curr_picture = curr_picture * float(1) / float(255)
+        self.visualise_on_01_pic(curr_picture)
+
+    def visualise_on_01_pic(self, pictue_01, side):
         top_left_x = self.initial_coord[0]
         top_left_y = self.initial_coord[1]
         for i in range(self.size()):
-            cv2.rectangle(curr_picture,
+            cv2.rectangle(pictue_01,
                           pt1=(top_left_x, top_left_y),
                           pt2=(top_left_x + side, top_left_y + side),
                           color=(255, 0, 0))
             top_left_x += self.actions[i][0]
             top_left_y += self.actions[i][1]
-
 
 class World:
     """
@@ -64,7 +66,7 @@ class World:
                                  context_matrix=self._get_current_retina_matrix(),
                                  action=[0,0])
 
-
+        observation = np.concatenate((dataset[i]), np.array(self.actions[i], dtype='float32'))
         return
 
 
